@@ -119,6 +119,42 @@ input {
   letter-spacing: 0;
 }
 
+.game-title {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.14em 0.26em;
+  align-items: baseline;
+}
+
+.title-word {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.03em;
+}
+
+.title-initial {
+  display: inline-grid;
+  place-items: center;
+  min-width: 0.9em;
+  margin-right: 0.01em;
+  border: 0.06em solid currentColor;
+  border-radius: 0.14em;
+  background: var(--surface);
+  color: var(--fg);
+  font-size: 1.12em;
+  font-weight: 950;
+  line-height: 0.96;
+}
+
+.compact-title {
+  gap: 0.08em 0.18em;
+}
+
+.compact-title .title-initial {
+  min-width: 1em;
+  border-width: 1px;
+}
+
 .small {
   font-size: 13px;
 }

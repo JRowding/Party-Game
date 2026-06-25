@@ -1,6 +1,6 @@
-# Party Card Game
+# Cards Under No Tolerance
 
-A playable MVP of a private, Cards Against Humanity-style web game for friends. It uses one Next.js + React + TypeScript project, a custom Node.js server, Socket.IO, and in-memory rooms.
+A playable MVP of a private adult party card game for friends. It uses one Next.js + React + TypeScript project, a custom Node.js server, Socket.IO, and in-memory rooms.
 
 ## Assumptions
 
@@ -19,7 +19,7 @@ A playable MVP of a private, Cards Against Humanity-style web game for friends. 
 2. Open PowerShell in this folder:
 
    ```powershell
-   cd "C:\Users\JonnoR\Documents\Codex\2026-05-28\AmazinResellerTycoon_Alpha1_Web\party-card-game"
+   cd "C:\Users\JonnoR\Documents\GitHub\Party-Game\party-card-game"
    ```
 
 3. Install dependencies:

@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Party Card Game",
-  description: "A private friends-only party card game skeleton"
+  title: "Cards Under No Tolerance",
+  description: "A private adult party card game for friends"
 };
 
 export const viewport: Viewport = {

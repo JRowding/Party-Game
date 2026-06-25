@@ -8,6 +8,7 @@ import type {
   PublicRoom,
   ServerToClientEvents
 } from "../lib/types";
+import { GameTitle } from "../components/GameTitle";
 
 type ClientSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
@@ -117,10 +118,12 @@ export default function Home() {
         <section className="hero">
           <div className="hero-copy">
             <p className="eyebrow">Private party game for adults</p>
-            <h1>Party Card Game</h1>
+            <h1>
+              <GameTitle />
+            </h1>
             <p className="tagline">
-              A fast, no-account card night for friends who want anonymous answers,
-              rotating judges, and exactly zero faff.
+              A private adult party card game where taste goes to die, rooms stay private,
+              and nobody needs an account.
             </p>
           </div>
           <div className="hero-note">
@@ -294,7 +297,9 @@ function Shell({
     <main className="app">
       <section className="topbar">
         <div>
-          <div className="brand">Party Card Game</div>
+          <div className="brand">
+            <GameTitle compact />
+          </div>
           <div className="muted small">Private room for adults</div>
         </div>
         <div className="row">
