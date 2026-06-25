@@ -10,6 +10,8 @@ A playable MVP of a private, Cards Against Humanity-style web game for friends. 
 - Placeholder cards are intentionally tame and local-only for now.
 - Rooms are temporary. Restarting the Node.js server deletes every room.
 - The first judge is chosen automatically when the host starts the game.
+- The default win target is 8 points.
+- After game over, the host can start a fresh game with the same room and reserved seats, or any player can return to the main menu locally.
 
 ## Windows Setup
 
@@ -244,10 +246,13 @@ Image answer cards are not used in gameplay. They are imported and counted in `d
 - Rooms live in a `Map<string, Room>` in memory on the Node.js process.
 - Creating a room generates a short 5-character room code and creates the host player.
 - Joining a room adds a player while the room is in the lobby, or reconnects an existing disconnected seat if the nickname matches.
+- The landing page has separate create and join sections, plus a short overview for new players.
 - Each socket joins a private Socket.IO room named after its player id, so the server can send each player a room view containing only their own hand.
 - Public room updates hide submitted answer cards until all connected non-judge players have submitted.
 - Revealed submissions use anonymous submission ids. The browser never receives the submitter for each answer; the server maps the winning submission back to the scoring player.
 - Non-judge players are dealt back up to 10 answer cards at the start of each round after the previous winner is chosen.
+- First player to 8 points wins. On game over, `playAgain` resets scores, submissions, previous winners, hands, and local deck order while preserving the same room and player seats.
+- `leaveRoom` returns only that player to the main menu and marks their seat away if they have no other live socket. If the host leaves, host status moves to the next connected player.
 - Game logic lives in `lib/gameLogic.ts`; active deck selection lives in `lib/activeDeck.ts`; shared TypeScript types live in `lib/types.ts`; placeholder cards live in `lib/cards.ts`.
 - The development-time Card Factory lives in `tools/card-factory/cardFactory.ts`.
 - The development-time CrCast deck importer lives in `tools/deck-importer/importDecks.ts`.
@@ -262,6 +267,7 @@ Image answer cards are not used in gameplay. They are imported and counted in `d
 6. Submit one answer from each non-judge window.
 7. Use the judge window to pick an anonymous winning answer.
 8. Confirm the score increments, hands refill, the judge rotates, and the next round starts automatically.
+9. To test game over quickly, temporarily lower `DEFAULT_TARGET_SCORE` in `lib/gameLogic.ts`, play until game over, then confirm the host can use Play again and any player can use Return to main menu.
 
 To test reconnects, close one window during the game, reopen `http://localhost:3000`, join with the same room code and nickname, and confirm the same seat, score, hand, and round state return.
 
@@ -274,3 +280,4 @@ To test reconnects, close one window during the game, reopen `http://localhost:3
 - There is no runtime card generation, custom cards, card packs, avatars, moderation, or accounts.
 - A game in progress does not accept brand-new players.
 - If the judge disconnects mid-round, the room currently waits for that judge to reconnect.
+- Play again starts with currently connected players; disconnected reserved seats remain in the room but are not active until they reconnect.

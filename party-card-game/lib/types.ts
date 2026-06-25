@@ -79,6 +79,8 @@ export type ClientToServerEvents = {
     callback: (result: SocketResult) => void
   ) => void;
   startGame: (payload: { code: string; playerId: string }) => void;
+  playAgain: (payload: { code: string; playerId: string }) => void;
+  leaveRoom: (payload: { code: string; playerId: string }) => void;
   submitAnswer: (
     payload: { code: string; playerId: string; cardId: string }
   ) => void;

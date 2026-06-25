@@ -7,6 +7,8 @@ import {
   joinOrReconnect,
   markDisconnected,
   selectWinner,
+  playAgain,
+  leaveRoom,
   startGame,
   submitAnswer,
   toPublicRoom,
@@ -107,6 +109,25 @@ app.prepare().then(() => {
 
     socket.on("startGame", ({ code, playerId }) => {
       runRoomAction(io, code, (room) => startGame(room, playerId));
+    });
+
+    socket.on("playAgain", ({ code, playerId }) => {
+      runRoomAction(io, code, (room) => playAgain(room, playerId));
+    });
+
+    socket.on("leaveRoom", ({ code, playerId }) => {
+      const room = rooms.get(code.trim().toLocaleUpperCase());
+      if (!room) {
+        return;
+      }
+
+      socket.leave(playerId);
+      socketPlayers.delete(socket.id);
+      unregisterPlayerSocket(playerId, socket.id);
+      if (!hasLivePlayerSocket(playerId)) {
+        leaveRoom(room, playerId);
+      }
+      emitRoom(io, room);
     });
 
     socket.on("submitAnswer", ({ code, playerId, cardId }) => {

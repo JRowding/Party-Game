@@ -6,7 +6,7 @@ const ROOM_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const MAX_PLAYERS = 8;
 const MIN_PLAYERS = 3;
 const HAND_SIZE = 10;
-const DEFAULT_TARGET_SCORE = 5;
+const DEFAULT_TARGET_SCORE = 8;
 
 export function normaliseNickname(nickname: string) {
   return nickname.trim().replace(/\s+/g, " ").slice(0, 24);
@@ -81,6 +81,7 @@ export function markDisconnected(room: Room, playerId: string) {
     player.connected = false;
   }
 
+  assignHostIfNeeded(room);
   revealIfRoundReady(room);
 }
 
@@ -100,12 +101,39 @@ export function startGame(room: Room, playerId: string) {
     throw new Error("This game supports up to 8 players.");
   }
 
-  room.players.forEach((player) => {
-    player.score = 0;
-    player.hand = [];
-  });
-
+  resetRoomForNewGame(room);
   beginRound(room);
+}
+
+export function playAgain(room: Room, playerId: string) {
+  assertPhase(room, "gameOver");
+
+  if (room.hostPlayerId !== playerId) {
+    throw new Error("Only the host can start another game.");
+  }
+
+  const connectedPlayers = getConnectedPlayers(room);
+  if (connectedPlayers.length < MIN_PLAYERS) {
+    throw new Error("You need at least 3 connected players to play again.");
+  }
+
+  if (connectedPlayers.length > MAX_PLAYERS) {
+    throw new Error("This game supports up to 8 players.");
+  }
+
+  resetRoomForNewGame(room);
+  beginRound(room);
+}
+
+export function leaveRoom(room: Room, playerId: string) {
+  const player = room.players.find((candidate) => candidate.id === playerId);
+  if (!player) {
+    return;
+  }
+
+  player.connected = false;
+  assignHostIfNeeded(room);
+  revealIfRoundReady(room);
 }
 
 export function submitAnswer(room: Room, playerId: string, cardId: string) {
@@ -236,6 +264,29 @@ function beginRound(room: Room) {
     .forEach((player) => drawToHand(player, room));
 }
 
+function resetRoomForNewGame(room: Room) {
+  room.answerDeck = shuffle([...answerCards]);
+  room.promptDeck = shuffle([...promptCards]);
+  room.discardPile = [];
+
+  room.players.forEach((player) => {
+    player.score = 0;
+    player.hand = [];
+  });
+
+  room.game = {
+    phase: "lobby",
+    targetScore: DEFAULT_TARGET_SCORE,
+    roundNumber: 0,
+    judgePlayerId: null,
+    promptCard: null,
+    submissions: [],
+    winnerPlayerId: null,
+    previousRoundWinnerPlayerId: null,
+    previousRoundWinningCard: null
+  };
+}
+
 function createPlayer(nickname: string, seat: number, isHost: boolean): Player {
   return {
     id: randomUUID(),
@@ -321,6 +372,22 @@ function allActiveNonJudgesSubmitted(room: Room) {
 function revealIfRoundReady(room: Room) {
   if (room.game.phase === "playing" && allActiveNonJudgesSubmitted(room)) {
     room.game.phase = "judging";
+  }
+}
+
+function assignHostIfNeeded(room: Room) {
+  const currentHost = room.players.find((player) => player.id === room.hostPlayerId);
+  if (currentHost?.connected) {
+    return;
+  }
+
+  const nextHost = room.players.find((player) => player.connected);
+  room.players.forEach((player) => {
+    player.isHost = Boolean(nextHost && player.id === nextHost.id);
+  });
+
+  if (nextHost) {
+    room.hostPlayerId = nextHost.id;
   }
 }
 

@@ -79,6 +79,22 @@ export default function Home() {
     }
   }
 
+  function playAgain() {
+    if (room && me) {
+      socket.emit("playAgain", { code: room.code, playerId: me.id });
+    }
+  }
+
+  function returnToMainMenu() {
+    if (room && me) {
+      socket.emit("leaveRoom", { code: room.code, playerId: me.id });
+    }
+
+    setRoom(null);
+    setRoomCode("");
+    setError("");
+  }
+
   function submitAnswer(cardId: string) {
     if (room && me) {
       socket.emit("submitAnswer", { code: room.code, playerId: me.id, cardId });
@@ -97,16 +113,29 @@ export default function Home() {
 
   if (!room) {
     return (
-      <main className="app">
-        <section className="topbar">
-          <div className="brand">Party Card Game</div>
-          <div className="muted">Private rooms, temporary chaos.</div>
+      <main className="app landing">
+        <section className="hero">
+          <div className="hero-copy">
+            <p className="eyebrow">Private party game for adults</p>
+            <h1>Party Card Game</h1>
+            <p className="tagline">
+              A fast, no-account card night for friends who want anonymous answers,
+              rotating judges, and exactly zero faff.
+            </p>
+          </div>
+          <div className="hero-note">
+            <strong>No accounts required.</strong>
+            <span>Rooms are temporary and vanish when the server restarts.</span>
+          </div>
         </section>
 
-        <div className="grid">
-          <section className="panel dark">
-            <h1>Create a room</h1>
-            <p>Start a private game and share the room code with friends.</p>
+        <div className="home-grid">
+          <section className="panel action-panel dark">
+            <div>
+              <p className="eyebrow">Create game</p>
+              <h2>Host a new room</h2>
+              <p>Share the short room code with 3-8 players, then start from the lobby.</p>
+            </div>
             <form className="stack" onSubmit={createRoom}>
               <input
                 value={nickname}
@@ -118,9 +147,12 @@ export default function Home() {
             </form>
           </section>
 
-          <section className="panel">
-            <h1>Join a room</h1>
-            <p className="muted">Use the same nickname to reclaim your seat after disconnecting.</p>
+          <section className="panel action-panel">
+            <div>
+              <p className="eyebrow">Join game</p>
+              <h2>Enter a room code</h2>
+              <p className="muted">Use the same nickname to reclaim your seat after disconnecting.</p>
+            </div>
             <form className="stack" onSubmit={joinRoom}>
               <input
                 value={roomCode}
@@ -139,6 +171,24 @@ export default function Home() {
           </section>
         </div>
 
+        <section className="how-it-works">
+          <h2>How it works</h2>
+          <div className="steps">
+            <div>
+              <strong>1. Read the prompt</strong>
+              <span>One player is judge each round.</span>
+            </div>
+            <div>
+              <strong>2. Submit answers</strong>
+              <span>Non-judges play one card anonymously.</span>
+            </div>
+            <div>
+              <strong>3. Pick a winner</strong>
+              <span>First to 8 points wins the room.</span>
+            </div>
+          </div>
+        </section>
+
         {error && <p className="error">{error}</p>}
       </main>
     );
@@ -146,13 +196,11 @@ export default function Home() {
 
   if (room.game.phase === "lobby") {
     return (
-      <Shell room={room} error={error}>
+      <Shell room={room} error={error} onReturnHome={returnToMainMenu}>
         <div className="split">
-          <section className="panel">
-            <h1>Lobby</h1>
-            <p>
-              Room code <span className="code">{room.code}</span>
-            </p>
+          <section className="panel lobby-panel">
+            <p className="eyebrow">Lobby</p>
+            <h1>Room <span className="code large">{room.code}</span></h1>
             <p className="muted">Waiting for 3-8 connected players. Seats stay reserved by nickname.</p>
             <PlayerList room={room} />
           </section>
@@ -175,21 +223,37 @@ export default function Home() {
 
   if (room.game.phase === "gameOver") {
     return (
-      <Shell room={room} error={error}>
-        <section className="panel dark">
-          <h1>Game over</h1>
-          <p>{finalWinner ? `${finalWinner.nickname} wins.` : "Winner decided."}</p>
-          {room.game.previousRoundWinningCard && (
-            <p>Final winning card: {room.game.previousRoundWinningCard.text}</p>
-          )}
+      <Shell room={room} error={error} onReturnHome={returnToMainMenu}>
+        <section className="game-over">
+          <div className="panel dark victory-panel">
+            <p className="eyebrow">Game over</p>
+            <h1>{finalWinner ? `${finalWinner.nickname} wins` : "Winner decided"}</h1>
+            <p>Final target: {room.game.targetScore} points</p>
+            {room.game.previousRoundWinningCard && (
+              <div className="card answer-preview final-card">
+                <strong>Final winning card</strong>
+                <p>{room.game.previousRoundWinningCard.text}</p>
+              </div>
+            )}
+            <div className="button-row">
+              {isHost ? (
+                <button onClick={playAgain}>Play again</button>
+              ) : (
+                <span className="waiting-text">Waiting for the host to start another game.</span>
+              )}
+              <button className="secondary inverted" onClick={returnToMainMenu}>
+                Return to main menu
+              </button>
+            </div>
+          </div>
+          <Scores room={room} title="Final scores" />
         </section>
-        <Scores room={room} />
       </Shell>
     );
   }
 
   return (
-    <Shell room={room} error={error}>
+    <Shell room={room} error={error} onReturnHome={returnToMainMenu}>
       <div className="game-layout">
         <section className="stack">
           <RoundSummary
@@ -218,19 +282,27 @@ export default function Home() {
 function Shell({
   room,
   error,
+  onReturnHome,
   children
 }: {
   room: PublicRoom;
   error: string;
+  onReturnHome: () => void;
   children: React.ReactNode;
 }) {
   return (
     <main className="app">
       <section className="topbar">
-        <div className="brand">Party Card Game</div>
+        <div>
+          <div className="brand">Party Card Game</div>
+          <div className="muted small">Private room for adults</div>
+        </div>
         <div className="row">
           <span className="code">{room.code}</span>
           <span>{room.me?.nickname}</span>
+          <button className="secondary compact" onClick={onReturnHome}>
+            Leave
+          </button>
         </div>
       </section>
       {children}
@@ -256,7 +328,7 @@ function RoundSummary({
         <span>Judge: {judge?.nickname ?? "Unknown"}</span>
         <span>Target: {room.game.targetScore}</span>
       </div>
-      <div className="panel">
+      <div className="panel previous-round">
         <h2>Previous round</h2>
         {previousWinner && room.game.previousRoundWinningCard ? (
           <p>
@@ -389,10 +461,10 @@ function Submissions({ room }: { room: PublicRoom }) {
   );
 }
 
-function Scores({ room }: { room: PublicRoom }) {
+function Scores({ room, title = "Scores" }: { room: PublicRoom; title?: string }) {
   return (
     <section className="panel">
-      <h2>Scores</h2>
+      <h2>{title}</h2>
       <ul className="score-list">
         {[...room.players]
           .sort((first, second) => second.score - first.score || first.seat - second.seat)
